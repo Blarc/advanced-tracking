@@ -127,3 +127,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+/**/data/
+/**/vot2016/
+/**/vot2016/
+/**/vot2014/
+/workspace-dir-vot13/sequences/
+/workspace-dir-vot14/sequences/
+/workspace-dir-vot15/sequences/
+.idea
