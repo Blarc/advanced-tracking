@@ -8,7 +8,7 @@ from utils.tracker import Tracker
 
 
 class CorrelationFilterTracker(Tracker):
-    
+
     def __init__(self, enlarge_factor=1, gaussian_sigma=4, filter_lambda=1, update_factor=0.1):
         super().__init__()
 
@@ -21,19 +21,18 @@ class CorrelationFilterTracker(Tracker):
         self.ideal_gaussian = None
         self.fft_ideal_gaussian = None
         self.patch_size = None
-        
+
         self.template = None
         self.position = None
         self.size = None
         self.cosine_window = None
-        
+
         self.filter_fft_conj = None
-    
+
     def name(self):
         return "CorrelationFilterTracker"
 
     def initialize(self, image, region):
-
 
         if len(region) == 8:
             x_ = np.array(region[::2])
@@ -91,7 +90,7 @@ class CorrelationFilterTracker(Tracker):
 
         # Returns maximum (peak) in correlation response
         y_max, x_max = np.unravel_index(correlation_response.argmax(), correlation_response.shape)
-        
+
         # Fix because Gaussian is inverted
         if x_max > patch.shape[0] / 2:
             x_max = x_max - patch.shape[0]
@@ -107,6 +106,8 @@ class CorrelationFilterTracker(Tracker):
         patch, _ = get_patch(image, self.position, self.patch_size)
         patch = np.multiply(patch, self.cosine_window)
         new_filter_fft_conj = self.construct_filter(patch)
-        self.filter_fft_conj = (1 - self.update_factor) * self.filter_fft_conj + self.update_factor * new_filter_fft_conj
+        self.filter_fft_conj = (
+                                           1 - self.update_factor) * self.filter_fft_conj + self.update_factor * new_filter_fft_conj
 
-        return [self.position[0] - (self.size[0] / 2), self.position[1] - (self.size[1] / 2), self.size[0], self.size[1]]
+        return [self.position[0] - (self.size[0] / 2), self.position[1] - (self.size[1] / 2), self.size[0],
+                self.size[1]]

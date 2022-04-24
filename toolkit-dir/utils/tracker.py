@@ -78,4 +78,4 @@ class Tracker(ABC):
 
             save_regions(results, results_path)
             save_vector(times, time_path)
-            save_vector(init_times, init_time_path)
+            # save_vector(init_times, init_time_path)

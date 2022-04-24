@@ -10,5 +10,8 @@ correlation_tracker:  # use tracker identifier as you want to call your tracker 
 # here is an example for the NCC tracker:
 ncc_tracker:
   tracker_path: examples/python_ncc.py
-  class_name: NCCTracker  
-...
+  class_name: NCCTracker
+  
+particle_tracker:
+  tracker_path: examples/particle_filter_tracker.py
+  class_name: ParticleFilterTracker  
