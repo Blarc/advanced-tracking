@@ -136,6 +136,8 @@ def plot_curves(q, r, x_, y_, model_, ax, title):
 
     ax.plot(sx, sy, c="blue", linewidth=1)
     ax.title.set_text(title)
+    ax.set_xticks([])
+    ax.set_yticks([])
 
 
 if __name__ == '__main__':
@@ -147,38 +149,36 @@ if __name__ == '__main__':
             np.sin(np.linspace(5 * math.pi, 0, N)) * np.linspace(5 * math.pi, 0, N)
         ),
         (
-            np.array([4, 6, 7, 7, 6, 4, 3, 3, 5, 7, 8, 10, 12, 13, 13]),
-            np.array([-4, -3, -1, 1, 3, 4, 6, 8, 9, 8, 6, 5, 6, 8, 10])),
+            np.array([4, 6, 7, 3, 2, 1, 1, 1, 1, 3, 5, 7, 10, 10, 10]),
+            np.array([-4, -4, -3, -2, -1, 0, 1, 2, 3, 6, 4, 5, 7, 8, 10])),
         (
-            np.array([1, 3, 4, 4, 4, 3, 1, -1, -3, -5, -6, -6, -6, -5, -3, -1]),
-            np.array([2, 2, 0, -2, -4, -6, -7, -7, -7, -6, -4, -2, 0, 2, 2, 2])
+            np.array([1, 1, 2, 3, 3, 2, 0, -1, -3, -5, -6, -6, -6, -2, -2, -1]),
+            np.array([5, 3, 2, 1, 0, -1, 0, -7, -7, -6, -4, -2, 0, 0, 2, 5])
         )]
 
     for index, (x, y) in enumerate(curves):
         fig1, ((ax1_11, ax1_12, ax1_14, ax1_15),
                (ax1_21, ax1_22, ax1_24, ax1_25),
                (ax1_31, ax1_32, ax1_34, ax1_35)) = plt.subplots(3, 4, figsize=(12, 9))
-
+        
         model = "RW"
         plot_curves(100, 1, x, y, model, ax1_11, model + ": q = 100, r = 1")
         plot_curves(5, 1, x, y, model, ax1_12, model + ": q = 5, r = 1")
-        # plot_curves(1, 1, x, y, model, ax1_13, model + ": q = 1, r = 1")
         plot_curves(1, 5, x, y, model, ax1_14, model + ": q = 1, r = 5")
         plot_curves(1, 100, x, y, model, ax1_15, model + ": q = 1, r = 100")
 
         model = "NCV"
         plot_curves(100, 1, x, y, model, ax1_21, model + ": q = 100, r = 1")
         plot_curves(5, 1, x, y, model, ax1_22, model + ": q = 5, r = 1")
-        # plot_curves(1, 1, x, y, model, ax1_23, model + ": q = 1, r = 1")
         plot_curves(1, 5, x, y, model, ax1_24, model + ": q = 1, r = 5")
         plot_curves(1, 100, x, y, model, ax1_25, model + ": q = 1, r = 100")
 
         model = "NCA"
         plot_curves(100, 1, x, y, model, ax1_31, model + ": q = 100, r = 1")
         plot_curves(5, 1, x, y, model, ax1_32, model + ": q = 5, r = 1")
-        # plot_curves(1, 1, x, y, model, ax1_33, model + ": q = 1, r = 1")
         plot_curves(1, 5, x, y, model, ax1_34, model + ": q = 1, r = 5")
         plot_curves(1, 100, x, y, model, ax1_35, model + ": q = 1, r = 100")
 
-        plt.savefig(f'figures/curve{str(index)}.png')
+        plt.tight_layout()
+        plt.savefig(f'figures/curve{str(index)}.png', bbox_inches='tight')
         plt.show()

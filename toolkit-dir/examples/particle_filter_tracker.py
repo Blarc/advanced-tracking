@@ -56,7 +56,7 @@ def get_dynamic_model_matrices(q, model):
             [1, 0],
             [0, 1]
         ]
-        
+
     else:
         return NotImplementedError('Specified model does not exist!')
 
@@ -82,19 +82,6 @@ def dist_to_prob(dist, sigma):
     return np.exp(-0.5 * dist ** 2 / sigma ** 2)
 
 
-# def draw_particles(image, particles, weights, position, size, color):
-#     image2 = image.copy()
-#     for (x, y, _, _), weight in zip(particles, weights):
-#         r = np.random.randint(0, 255)
-#         g = np.random.randint(0, 255)
-#         b = np.random.randint(0, 255)
-#         thickness = int(weight / 0.002) - 1
-#         image2 = cv2.circle(image2, (int(x), int(y)), radius=0, color=(b, g, r), thickness=thickness)
-#     image2, _ = get_patch(image2, position, (size[0] * 2.5, size[1] * 2.5))
-#     image2 = cv2.resize(image2, dsize=(int(image2.shape[1] * 3), int(image2.shape[0] * 3)))
-#     show_image(image2, 0, "-")
-
-
 def change_colorspace(image, colorspace):
     if colorspace == 'HSV':
         return cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -111,13 +98,14 @@ class ParticleFilterTracker(Tracker):
     def __init__(
             self,
             kernel_sigma=0.5,
-            histogram_bins=8,
-            n_of_particles=50,
+            histogram_bins=6,
+            n_of_particles=150,
             enlarge_factor=2,
             distance_sigma=0.11,
-            update_alpha=0.01,
-            color='YCRCB',
-            dynamic_model='NCV'
+            update_alpha=0.05,
+            color='HSV',
+            dynamic_model='NCV',
+            q=None
     ):
         self.kernel_sigma = kernel_sigma
         self.histogram_bins = histogram_bins
@@ -127,12 +115,12 @@ class ParticleFilterTracker(Tracker):
         self.update_alpha = update_alpha
         self.color = color
         self.dynamic_model = dynamic_model
+        self.q = q
 
         self.search_window = None
         self.position = None
         self.size = None
         self.template = None
-        self.q = None
 
         self.kernel = None
         self.patch_size = None
@@ -176,18 +164,16 @@ class ParticleFilterTracker(Tracker):
         image_pl = image.shape[0] * image.shape[1]
         patch_pl = self.size[0] * self.size[1]
 
-        q = int(patch_pl / image_pl * 200)
-        self.q = q if q > 0 else 1
-        # self.q = 100
+        if self.q is None:
+            self.q = max(0, int(patch_pl / image_pl * 200))
 
-        # CREATING VISUAL MODEL
+        # Visual model
         self.kernel = create_epanechnik_kernel(self.size[0], self.size[1], self.kernel_sigma)
         self.patch_size = self.kernel.shape
         self.template_histogram = normalize_histogram(extract_histogram(self.template,
                                                                         self.histogram_bins,
                                                                         weights=self.kernel))
 
-        # GENERATING DYNAMIC MODEL MATRICES
         self.system_matrix, self.system_covariance = get_dynamic_model_matrices(self.q, self.dynamic_model)
         self.particle_state = [self.position[0], self.position[1]]
 
@@ -196,9 +182,8 @@ class ParticleFilterTracker(Tracker):
         if self.dynamic_model == 'NCA':
             self.particle_state.extend([0, 0, 0, 0])
 
-        # GENERATING N PARTICLES AROUND POSITION
+        # Create n particles
         self.particles = self.sample_gauss(self.particle_state)
-
         self.weights = np.array([1 / self.n_of_particles for _ in range(self.n_of_particles)])
 
     def track(self, image):
@@ -216,7 +201,7 @@ class ParticleFilterTracker(Tracker):
         if self.color:
             image = change_colorspace(image, self.color)
 
-        # PARTICLE SAMPLING
+        # Sample particles
         weights_cumsumed = np.cumsum(self.weights)
         rand_samples = np.random.rand(self.n_of_particles, 1)
         sampled_indexes = np.digitize(rand_samples, weights_cumsumed)
@@ -233,26 +218,23 @@ class ParticleFilterTracker(Tracker):
                 patch, _ = get_patch(image, (p_x, p_y), self.patch_size)
                 histogram = normalize_histogram(extract_histogram(patch, self.histogram_bins, weights=self.kernel))
                 hellinger_dist = hellinger_distance(histogram, self.template_histogram)
-                prob = dist_to_prob(hellinger_dist, self.distance_sigma)
+                probability = dist_to_prob(hellinger_dist, self.distance_sigma)
             except Exception:
-                prob = 0
+                # TODO: Temporary solution.
+                probability = 0
 
-            self.weights[index] = prob
+            self.weights[index] = probability
 
-        # NORMALIZE WEIGHTS
+        # Normalize weights
         self.weights = self.weights / np.sum(self.weights)
 
-        # DRAWING PARTICLES
-        # if self.draw_particles:
-        #     draw_particles(image, self.particles, self.weights, self.position, self.size, (255, 0, 0))
-
-        # COMPUTE NEW POSITION
+        # Compute new position
         new_x = sum([particle[0] * self.weights[index] for index, particle in enumerate(self.particles)])
         new_y = sum([particle[1] * self.weights[index] for index, particle in enumerate(self.particles)])
 
         self.position = (new_x, new_y)
 
-        # UPDATE VISUAL MODEL
+        # Update the model
         if self.update_alpha > 0:
             self.template, _ = get_patch(image, (new_x, new_y), self.patch_size)
             self.template_histogram = (
